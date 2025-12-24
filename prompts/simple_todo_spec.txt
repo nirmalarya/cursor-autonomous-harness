@@ -1,0 +1,93 @@
+Project Specification: Simple Todo CLI
+=======================================
+
+## Overview
+
+Build a minimal command-line todo application in Python. Keep it simple and focused.
+
+## Technology Stack
+
+- Language: Python 3.11+
+- Storage: JSON file (todos.json)
+- CLI: Click library
+- No database, no web server
+
+## Core Features
+
+1. **Add todo**: `python todo.py add "Buy milk"`
+2. **List todos**: `python todo.py list`
+3. **Complete todo**: `python todo.py complete 1`
+4. **Delete todo**: `python todo.py delete 1`
+5. **Clear completed**: `python todo.py clear`
+
+## File Structure
+
+```
+simple-todo/
+├── todo.py          # Main CLI file
+├── todos.json       # Data storage
+├── requirements.txt # Just: click
+└── README.md        # Usage instructions
+```
+
+## Implementation Requirements
+
+### todo.py Structure
+
+```python
+import click
+import json
+from pathlib import Path
+
+# Single file, ~100 lines total
+# Functions: add_todo, list_todos, complete_todo, delete_todo, clear_completed
+# JSON format: [{"id": 1, "text": "Buy milk", "completed": false}, ...]
+```
+
+### Features Detail
+
+1. **Add**: Append to JSON with auto-incrementing ID
+2. **List**: Display with checkboxes (✓ for complete, ○ for pending)
+3. **Complete**: Mark todo as completed=true
+4. **Delete**: Remove from JSON
+5. **Clear**: Remove all completed todos
+
+## Success Criteria
+
+- All commands work correctly
+- Data persists across runs
+- Clean, readable output
+- Error handling (file not found, invalid ID, etc.)
+- No external dependencies except Click
+
+## Expected Output
+
+```bash
+$ python todo.py add "Buy milk"
+✅ Added todo #1
+
+$ python todo.py list
+○ 1. Buy milk
+
+$ python todo.py complete 1
+✅ Completed todo #1
+
+$ python todo.py list
+✓ 1. Buy milk
+
+$ python todo.py clear
+✅ Cleared 1 completed todo
+```
+
+## Testing
+
+Test all commands manually:
+1. Add 3 todos
+2. Complete 1 todo
+3. List and verify
+4. Delete 1 todo
+5. Clear completed
+6. Verify JSON file format
+
+Keep it simple - this is a test project to validate streaming!
+

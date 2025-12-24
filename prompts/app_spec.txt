@@ -1,0 +1,770 @@
+<project_specification>
+  <project_name>AutoGraph v3 - AI-Powered Diagramming Platform (Eraser.io Parity)</project_name>
+
+  <overview>
+    Build a fully functional competitor to Eraser.io (https://www.eraser.io/), an AI-powered diagramming and technical documentation platform. AutoGraph v3 provides diagram-as-code, canvas drawing, AI diagram generation, real-time collaboration, version history, and enterprise features. The application uses microservices architecture with Next.js frontend and Python/FastAPI backend services, with Bayer MGA (myGenAssist) as the primary AI provider.
+    
+    Target users: Software architects, DevOps engineers, technical consultants, enterprise teams.
+    Success metric: User testing shows AutoGraph v3 quality indistinguishable from Eraser.io.
+  </overview>
+
+  <technology_stack>
+    <frontend>
+      <framework>Next.js 15.1.0 with App Router</framework>
+      <react>React 19.0.0</react>
+      <typescript>TypeScript 5.7.2 (strict mode)</typescript>
+      <styling>Tailwind CSS 3.4.15</styling>
+      <ui_components>Radix UI + shadcn/ui</ui_components>
+      <state_management>Zustand 5.0.1</state_management>
+      <canvas>TLDraw 2.4.0 (primary canvas library)</canvas>
+      <diagrams>Mermaid.js 11.4.0 (diagram-as-code rendering)</diagrams>
+      <code_editor>Monaco Editor 0.52.0</code_editor>
+      <markdown>react-markdown 9.0.1 + remark-gfm 4.0.0</markdown>
+      <icons>Lucide React 0.460.0</icons>
+      <real_time>Socket.IO client 4.8.0</real_time>
+      <port>Port 3000</port>
+    </frontend>
+    
+    <backend>
+      <language>Python 3.12.7</language>
+      <framework>FastAPI 0.115.0 (all services)</framework>
+      <server>Uvicorn 0.32.0</server>
+      <database>PostgreSQL 16.6</database>
+      <orm>SQLAlchemy 2.0.36 + Alembic 1.14.0</orm>
+      <validation>Pydantic 2.10.0</validation>
+      <cache>Redis 7.4.1</cache>
+      <storage>MinIO (S3-compatible)</storage>
+      <ai_providers>Bayer MGA (primary), OpenAI, Anthropic, Google Gemini</ai_providers>
+    </backend>
+    
+    <specialized_services>
+      <svg_renderer>
+        <runtime>Node.js 20.18.0</runtime>
+        <framework>Express 4.21.0</framework>
+        <rendering>Rough.js 4.6.6 (hand-drawn style)</rendering>
+        <port>Port 8096</port>
+      </svg_renderer>
+    </specialized_services>
+    
+    <microservices>
+      <service name="frontend" port="3000">Next.js UI</service>
+      <service name="api-gateway" port="8080">Request routing, auth, rate limiting</service>
+      <service name="auth-service" port="8085">JWT auth, SSO, user management</service>
+      <service name="diagram-service" port="8082">Diagram CRUD, storage</service>
+      <service name="ai-service" port="8084">MGA integration, diagram generation</service>
+      <service name="collaboration-service" port="8083">WebSocket, real-time</service>
+      <service name="git-service" port="8087">AutoGraphBot, GitHub/GitLab integration</service>
+      <service name="export-service" port="8097">High-quality PNG/SVG/PDF</service>
+      <service name="integration-hub" port="8099">Notion, Confluence, Slack, Jira</service>
+      <service name="svg-renderer" port="8096">Custom SVG generation</service>
+    </microservices>
+    
+    <infrastructure>
+      <postgres>PostgreSQL 16.6 on port 5432 - Primary database with 12 tables (users, teams, files, versions, comments, mentions, folders, shares, git_connections, audit_log, api_keys, usage_metrics)</postgres>
+      <redis>Redis 7.4.1 on port 6379 - Sessions, cache, pub/sub</redis>
+      <minio>MinIO on ports 9000/9001 - S3-compatible storage (diagrams, exports, uploads buckets)</minio>
+    </infrastructure>
+    
+    <testing>
+      <e2e>Playwright 1.49.1 - All user flows must have E2E tests</e2e>
+      <unit>Jest 29.7.0 (TS), pytest 8.3.0 (Python)</unit>
+      <coverage>Minimum 80% code coverage</coverage>
+    </testing>
+    
+    <mcp_servers>
+      <playwright>
+        <command>npx</command>
+        <args>@playwright/mcp-server</args>
+        <purpose>E2E testing all user interactions</purpose>
+      </playwright>
+      <postgresql>
+        <command>npx</command>
+        <args>@modelcontextprotocol/server-postgres</args>
+        <purpose>Database validation and queries</purpose>
+      </postgresql>
+    </mcp_servers>
+  </technology_stack>
+
+  <core_features>
+    <infrastructure>
+      - Docker Compose with all 10 services + 3 infrastructure (PostgreSQL, Redis, MinIO)
+      - Kubernetes manifests for production deployment
+      - Complete PostgreSQL schema with 12 tables, foreign keys, indexes
+      - Redis configured for sessions (24h TTL), cache (5min TTL), pub/sub
+      - MinIO with 3 buckets (diagrams, exports, uploads) and lifecycle rules
+      - API Gateway with routing, JWT auth, rate limiting (100/min per user, 1000/min per IP)
+      - Health checks for all services (30s interval, 3 retries)
+      - Logging with correlation IDs for distributed tracing
+      - Environment-based configuration (local, docker, kubernetes)
+      - Alembic migrations for database schema
+      - Connection pooling for database and Redis
+      - Circuit breaker pattern for failing services
+      - Graceful shutdown and restart
+      - Monitoring and metrics (Prometheus compatible)
+    </infrastructure>
+
+    <authentication_and_authorization>
+      - User registration with email/password (bcrypt hashing, cost factor 12)
+      - Login with JWT (1-hour access token, 30-day refresh token)
+      - Token refresh endpoint (rotate refresh tokens)
+      - Logout (single session or all sessions)
+      - Password reset flow (email with token, 1-hour expiry)
+      - SAML SSO (Microsoft Entra ID, Okta, OneLogin)
+      - JIT provisioning (auto-create users from SSO)
+      - Group mapping (SSO groups → AutoGraph roles)
+      - Rate limiting (5 login attempts per 15 min)
+      - Audit logging (all auth events)
+      - Session management with Redis
+      - Remember me functionality
+      - Multi-factor authentication (optional)
+    </authentication_and_authorization>
+
+    <diagram_management>
+      - Create diagram (canvas, note, or mixed type)
+      - List user's diagrams (pagination, filters, search)
+      - Get diagram by ID (full canvas_data and note_content)
+      - Update diagram (auto-versioning, optimistic locking, WebSocket notifications)
+      - Delete diagram (soft delete to trash, hard delete permanent)
+      - Duplicate diagram (copy with new UUID, fresh version history)
+      - Restore from trash (30-day retention)
+      - Move to folders
+      - Star/favorite diagrams
+      - Share diagrams (public links, password-protected, expiring links)
+      - Diagram templates (save frequently-used patterns)
+      - Batch operations (bulk delete, bulk move)
+      - Diagram metadata (creator, last edited by, view count)
+      - Thumbnail generation (256x256 PNG)
+      - Full-text search (PostgreSQL pg_trgm)
+    </diagram_management>
+
+    <canvas_and_drawing>
+      - TLDraw 2.4.0 integration (professional canvas engine)
+      - Drawing tools: Rectangle (R), Circle (O), Arrow (A), Line (L), Text (T), Pen (P), Selection (V)
+      - Figures/frames (organizational containers, F key)
+      - Figure features: Title, colors (8 presets), nesting, collapse/expand, lock
+      - Selection tools: Single, multi-select (Shift), lasso, selection box
+      - Transform: Move, resize (8 handles), rotate
+      - Grouping: Group (Ctrl+G), ungroup (Ctrl+Shift+G), nested groups
+      - Alignment: Left, center, right, top, middle, bottom
+      - Distribution: Even horizontal/vertical spacing
+      - Z-order: Bring to front, send to back, forward, backward
+      - Copy/paste/duplicate (Ctrl+C/V/D)
+      - Undo/redo: Infinite history (Ctrl+Z/Y)
+      - Keyboard shortcuts: Comprehensive (50+ shortcuts), customizable
+      - Style system: Colors (8 palettes), themes (light/dark), line styles, fills
+      - Insert menu (/ command): Search shapes, icons, diagrams, figures
+      - Icon library: 3000+ icons (AWS 915, Azure 300+, GCP 217, SimpleIcons 2900+)
+      - Icon search: Fuzzy matching, categorized, recent, favorites
+      - Properties panel: Live editing of selected elements
+      - Context menu: Right-click actions
+      - Pan and zoom: Space+drag, Ctrl+scroll, pinch gestures
+      - Grid and snap: Toggle grid (G key), snap to grid, snap to elements
+      - Rulers and guides: Pixel measurements, drag guides from rulers
+      - Mini-map: Overview navigator in corner
+      - Lock elements: Prevent editing (Ctrl+L)
+      - Hide/show elements: Toggle visibility
+      - Full-screen mode: F11 or button
+      - Presentation mode: Clean view for demos
+      - Touch gestures: Mobile/tablet support (pinch zoom, two-finger pan)
+      - Performance: 60 FPS with 1000+ elements
+      - Export selection: Export just selected elements to PNG
+    </canvas_and_drawing>
+
+    <diagram_as_code>
+      - Mermaid.js 11.4.0 rendering engine
+      - Flowcharts: Nodes, edges, decisions, subgraphs
+      - Sequence diagrams: Participants, messages, activation boxes, loops, alt/opt
+      - Entity-relationship diagrams: Entities, attributes, relationships, cardinality
+      - Class diagrams: Classes, properties, methods, inheritance
+      - State diagrams: States, transitions, nested states
+      - Gantt charts: Tasks, dependencies, milestones
+      - Git graphs: Commits, branches, merges
+      - Code editor: Monaco with Mermaid syntax highlighting
+      - Live preview: Code left, visual right, instant sync (< 100ms)
+      - Syntax validation: Real-time error detection
+      - Auto-complete: Mermaid syntax suggestions
+      - Code formatting: Auto-indent, beautify
+      - Snippets library: Common Mermaid patterns
+      - Error messages: Line numbers, helpful suggestions
+      - Draggable edits (Beta): Drag nodes to update code
+    </diagram_as_code>
+
+    <ai_diagram_generation>
+      - Natural language to diagram: "Create e-commerce architecture"
+      - Bayer MGA (myGenAssist) as PRIMARY provider (https://chat.int.bayer.com/api/v2)
+      - Fallback providers: OpenAI (GPT-4 Turbo), Anthropic (Claude 3.5 Sonnet), Google Gemini
+      - Diagram type detection: Auto-detect architecture vs sequence vs ERD vs flowchart
+      - Enhanced prompts: Multi-shot learning with professional examples
+      - Layout algorithms: Hierarchical (Sugiyama), force-directed, tree, circular
+      - Icon intelligence: "EC2"→aws-ec2, "Postgres"→postgresql, context-aware selection
+      - Quality validation: Check overlaps, spacing (min 50px), alignment, readability (score 0-100)
+      - Auto-retry: If quality < 80, regenerate with adjusted parameters (up to 2 retries)
+      - Iterative refinement: "Add caching layer", "Make database bigger", updates existing
+      - Context awareness: Remembers previous diagrams in session
+      - Template-based: Uses reference library for common patterns
+      - Domain-specific: Different approaches for fintech, healthcare, e-commerce, DevOps
+      - Token usage tracking: Log tokens, estimate cost per generation
+      - Provider comparison: Track quality metrics per provider
+      - Model selection: Choose specific models per provider
+      - Cost optimization: Suggest cheaper models for simple diagrams
+    </ai_diagram_generation>
+
+    <autographbot_codebase_analysis>
+      - AutoGraphBot: Intelligent codebase analyzer and diagram generator from code
+      - Connect GitHub/GitLab/Bitbucket/Azure DevOps repositories
+      - OAuth authentication or Personal Access Token
+      - Repository analysis: Detect languages, frameworks, services
+      - Code parsing: tree-sitter for AST analysis (Python, TypeScript, Java, Go, Rust)
+      - Service identification: Find main files, entry points, API definitions
+      - API endpoint extraction: Parse routes (FastAPI, Express, Spring, Django)
+      - Database model extraction: ORM models (SQLAlchemy, Prisma, Mongoose, JPA)
+      - Dependency analysis: Imports, package files, module relationships
+      - Communication patterns: HTTP calls, gRPC, message queues, databases
+      - Auto-generate architecture diagram from codebase
+      - Generate service dependency graph
+      - Generate database ERD from models
+      - Generate API flow diagrams
+      - Webhook integration: Auto-update on code changes
+      - CI/CD integration: Generate in build pipeline (GitHub Actions, GitLab CI, Azure Pipelines)
+      - Incremental updates: Only re-analyze changed files
+      - Configuration: .autograph.yml in repository for customization
+      - Multi-language support: Polyglot codebases
+      - Monorepo support: Multiple services in one repository
+    </autographbot_codebase_analysis>
+
+    <note_editor_markdown>
+      - Markdown editor with live preview (side-by-side or overlay)
+      - GitHub Flavored Markdown (GFM) support
+      - Headers: # to ###### with table of contents
+      - Formatting: **bold**, *italic*, ***both***, ~~strikethrough~~
+      - Lists: Ordered (1. 2.), unordered (- *), nested, task lists with checkboxes
+      - Code blocks: ```language with syntax highlighting (100+ languages)
+      - Inline code: `backticks` with background highlight
+      - Tables: GFM format with alignment, sorting
+      - Links: [text](url), auto-link URLs, anchor links within document
+      - Images: ![alt](url), drag-drop upload, paste from clipboard
+      - Blockquotes: > nested blockquotes supported
+      - Horizontal rules: --- or ***
+      - Footnotes: [^1] references
+      - Math equations: LaTeX via KaTeX ($inline$ and $$block$$)
+      - Live diagram embeds: ![[diagram:id]] embeds live, clickable diagram
+      - Figure embeds: ![[diagram:id#figure-id]] embeds specific canvas section
+      - Wikilinks: [[Page Name]] internal links
+      - Backlinks: Show pages linking to current
+      - Tags: #tag inline syntax
+      - Mentions: @username with notifications
+      - Emojis: :smile: syntax with autocomplete
+      - Word count, character count, reading time estimate
+      - Spell check and grammar checking (AI-powered optional)
+      - Find and replace within note
+      - Outline view: Navigate by headers
+      - Focus mode: Distraction-free writing
+      - Export: PDF (formatted), HTML, Markdown file
+    </note_editor_markdown>
+
+    <real_time_collaboration>
+      - WebSocket connections via Socket.IO (collaboration-service port 8083)
+      - Room-based: One room per diagram (file:{file_id})
+      - JWT authentication in handshake
+      - Cursor presence: Show all users' cursors with names, color-coded, real-time positions
+      - Selection presence: Highlight what others have selected
+      - Active element indicator: Who's editing which element
+      - Typing indicators: Show when users typing
+      - User list panel: Avatars, names, online status
+      - Document edits broadcast: Real-time updates < 200ms latency
+      - Operational transform: Merge concurrent edits without conflicts
+      - Redis pub/sub: Messages broadcast across multiple servers
+      - Presence tracking: Online, away, offline status
+      - Last seen timestamps: "Active 5 minutes ago"
+      - Activity feed: "User A created shape", "User B added comment"
+      - Collision avoidance: Warn if editing same element
+      - Disconnect handling: Clean up on disconnect, notify others
+      - Reconnect: Auto-reconnect with exponential backoff
+      - Eventual consistency: All clients converge to same state
+    </real_time_collaboration>
+
+    <comments_system>
+      - Add comments to canvas elements (positioned comments)
+      - Add comments to note text selections (inline comments)
+      - Comment threads: Reply to comments, nested conversations
+      - @mentions: Notify specific users (@username)
+      - Comment notifications: Email, in-app, push (PWA)
+      - Resolve/reopen workflow: Mark resolved, reopen if needed
+      - Comment reactions: 👍, ❤️, 😄 emoji reactions
+      - Edit comments: Edit own comments (within 5 minutes)
+      - Delete comments: Delete own, admins delete any
+      - Comment moderation: Flag inappropriate, admin review
+      - Comment count badge: Shows total comments on diagram
+      - Unread indicator: Highlight new comments since last visit
+      - Comment filters: All, open, resolved, mine, mentions
+      - Comment search: Full-text search across all comments
+      - Comment export: Export as CSV or PDF
+      - Real-time: Comments appear instantly for all users
+    </comments_system>
+
+    <sharing_and_permissions>
+      - Share via link: Generate unique shareable URL
+      - Permission levels: View-only or edit access
+      - Public sharing: Anyone with link can view
+      - Private sharing: Only team members (must be logged in)
+      - Password-protected links: Require password to access shared diagram
+      - Link expiration: Time-based (1 day, 7 days, 30 days, never)
+      - Revoke links: Invalidate share tokens
+      - Share tracking: View count, last accessed timestamp, who viewed
+      - Share analytics: Views over time, geographic distribution (optional)
+      - Share settings: Customize per link (permissions, expiry, password)
+      - Share preview: Rich preview card when link shared (Open Graph tags)
+      - Share via social: Quick buttons for Slack, Teams, email
+      - Embed code: iframe HTML for embedding in other websites
+      - Team workspaces: Organization-level accounts
+      - Invite team members: Email invitations with role selection
+      - Team member roles: Admin (full access), Editor (edit diagrams), Viewer (read-only), custom roles
+      - Access control: File-level, folder-level, team-level permissions
+      - Permission inheritance: Folders pass permissions to contents
+      - Guest access: Invite external collaborators with limited permissions
+      - Team settings: Billing, members, SSO configuration
+    </sharing_and_permissions>
+
+    <git_integration>
+      - Connect repositories: GitHub, GitLab, Bitbucket, Azure DevOps Git
+      - OAuth flows: Standard OAuth 2.0 for each provider
+      - Repository listing: Show user's accessible repositories
+      - Branch selection: Choose branch to sync with (main, develop, feature)
+      - Webhook setup: Auto-sync on push events
+      - Commit diagrams: Save diagram files to repository
+      - Commit messages: Customizable commit messages
+      - File path selection: Choose where in repo to save
+      - Create branches: New branch for diagram changes
+      - Pull request creation: Create PR with diagram changes directly from AutoGraph
+      - PR description: Auto-generated with diagram preview
+      - PR status tracking: Show if PR open, merged, closed in AutoGraph
+      - Comment on PRs: Add diagram comments to PR threads
+      - README integration: Add/update diagrams in README.md
+      - Markdown format: Diagrams embedded as images in markdown
+      - CI/CD integration: Trigger diagram generation in pipelines
+      - Auto-update: Diagrams update when code changes (via webhook)
+      - Sync settings: Real-time, hourly, daily, or manual
+      - Conflict resolution: Handle diagram edited in repo and AutoGraph
+    </git_integration>
+
+    <version_history>
+      - Auto-save: Every 5 minutes if changes made
+      - Major edit detection: Immediate version on significant changes (delete 10+ elements)
+      - Version numbering: Auto-increment (1, 2, 3, ...)
+      - Version snapshots: Full canvas_data and note_content per version
+      - Version thumbnails: 256x256 preview image
+      - Version metadata: User, timestamp, description, label
+      - Unlimited versions: No limit on version count
+      - Version timeline: Chronological list UI
+      - Version comparison: Visual diff between versions
+      - Diff view: Side-by-side or overlay showing additions (green), deletions (red), modifications (yellow)
+      - Restore version: Revert to any previous version
+      - Fork version: Create new diagram from old version
+      - Version labels: Tag important versions ("Before redesign", "Production v1.0")
+      - Version comments: Add notes explaining changes
+      - Version search: Find versions by content, date, author
+      - Version sharing: Share link to specific version
+      - Version locking: Prevent editing historical versions
+      - Background compression: Gzip old versions to save storage
+    </version_history>
+
+    <export_system>
+      - PNG export: High resolution (1x, 2x, 4x), transparent or custom background, anti-aliased
+      - SVG export: Vector format, scalable, opens in Illustrator/Figma
+      - PDF export: Single-page or multi-page for large diagrams, embedded fonts, vector where possible
+      - Markdown export: Diagram + notes as .md file with embedded images
+      - JSON export: Canvas data structure (backup, version control friendly)
+      - HTML export: Standalone with CSS
+      - Export selection: Export only selected elements with tight cropping
+      - Export figure: Export specific figure/frame
+      - Export options: Background (transparent/white/custom), resolution, quality (low/medium/high/ultra)
+      - Batch export: Export all diagrams in document to ZIP
+      - Scheduled exports: Auto-export daily/weekly
+      - Export to cloud: Direct upload to S3, Google Drive, Dropbox
+      - Export via API: Programmatic export
+      - Export presets: Save favorite export settings
+      - Export history: Track all exports with timestamps
+      - Playwright rendering: Use browser automation for pixel-perfect exports
+      - Quality optimization: Compress PNG, optimize SVG, small PDF file sizes
+    </export_system>
+
+    <enterprise_features>
+      - SAML SSO: Microsoft Entra ID (Azure AD), Okta, OneLogin, custom providers
+      - SSO configuration: Entity ID, SSO URL, certificate upload
+      - SP-initiated and IdP-initiated flows
+      - SCIM provisioning: Automatic user sync from identity provider
+      - SCIM deprovisioning: Auto-remove users when removed from IdP
+      - Team management: Create teams, invite members, assign roles
+      - Custom roles: Define granular permissions (enterprise)
+      - Permission templates: Pre-configured role sets
+      - User management dashboard: Admin view of all users
+      - Bulk operations: Invite multiple users, change roles in bulk
+      - Allowed email domains: Restrict signups to company domains
+      - IP allowlist: Restrict access by IP address
+      - Audit log: Comprehensive logging of all actions (user logins, diagram access, changes)
+      - Audit export: CSV, JSON format for compliance
+      - Audit retention: Configurable retention period
+      - Compliance reports: SOC 2, ISO 27001, GDPR formats
+      - Data retention policies: Auto-delete old data per policy
+      - Encryption at rest: Database and file storage encrypted
+      - Encryption in transit: TLS 1.3 for all connections
+      - Key management: Rotate encryption keys
+      - Secrets management: Secure storage of API keys, tokens
+      - Usage analytics: Dashboard showing diagrams created, users active, storage used
+      - Cost allocation: Track usage by team, department
+      - License management: Seat count, utilization tracking
+      - Quota management: Limits per plan tier (free, pro, enterprise)
+      - API rate limiting: Configurable per plan
+      - Webhook management: Configure webhooks for events (diagram.created, etc.)
+      - Custom branding: Logo, colors, custom domain (diagrams.bayer.com)
+      - White-label: Remove AutoGraph branding (enterprise)
+      - On-premises deployment: Air-gapped installation option
+      - BYOC (Bring Your Own Cloud): Deploy in customer's AWS/Azure/GCP
+      - Customer-managed encryption: Customer controls keys
+    </enterprise_features>
+
+    <integrations>
+      - VS Code extension: View/edit diagrams in IDE, syntax highlighting, live preview
+      - Notion integration: Embed diagrams in Notion pages, live updates
+      - Confluence integration: Macro for embedding, live updates in Confluence
+      - Slack bot: Share diagrams to channels, notifications, bot commands (/autograph)
+      - Jira integration: Link diagrams to tickets, embed in descriptions
+      - Azure DevOps: Work item integration (Bayer priority!), boards sync, wiki integration
+      - Zapier: Automation workflows with 5000+ apps
+      - Webhooks: Custom webhooks for diagram events
+      - Diagramming API: RESTful API for all operations (create, read, update, delete, export)
+      - API authentication: API keys, OAuth tokens
+      - API rate limiting: Per key, per user
+      - API documentation: OpenAPI/Swagger spec
+      - API client libraries: Python, TypeScript, Go SDKs
+    </integrations>
+
+    <organization_and_discovery>
+      - Dashboard views: All files, Recent (last accessed), Starred (favorites), Shared with me, Team files, Trash
+      - View modes: Grid (thumbnails) or List (table)
+      - Sorting: Name, date created, date updated, last viewed, size
+      - Filtering: Type, author, date range, folder, tags
+      - Bulk operations: Select multiple, batch actions
+      - Folders: Create, nest (unlimited depth), rename, delete, colors, icons
+      - Folder permissions: Control access per folder
+      - Drag-drop: Move files/folders with drag-drop
+      - Breadcrumbs: Show current location in folder hierarchy
+      - Folder tree: Sidebar with expandable tree view
+      - Search: Full-text across diagrams, notes, comments
+      - Search filters: Type, date, author, folder
+      - Advanced search: Boolean operators (AND, OR, NOT)
+      - Search suggestions: Autocomplete, recent searches
+      - Save searches: Bookmark frequent searches
+      - Tags: Add tags to files, tag colors, filter by tags
+      - Popular tags: Show most-used tags
+      - Command palette (⌘K): Search files, execute commands, navigate
+      - Command categories: Files, commands, navigation, symbols
+      - Recent commands: Quick access to last 5 commands
+      - Fuzzy matching: Typo-tolerant search
+      - Customizable: Add favorite commands
+      - Template gallery: Pre-made diagrams for common patterns
+      - Templates: Architecture (microservices, 3-tier, serverless), ERD (e-commerce, SaaS), flowcharts, sequences
+      - Custom templates: Save your diagrams as reusable templates
+      - Template sharing: Share templates with team
+    </organization_and_discovery>
+
+    <ux_and_performance>
+      - Keyboard shortcuts: Comprehensive (50+ shortcuts), fully customizable
+      - Shortcuts cheat sheet: ⌘? shows all shortcuts
+      - Platform-aware: ⌘ on Mac, Ctrl on Windows/Linux
+      - Context-aware: Different shortcuts per page (canvas vs note editor)
+      - Dark mode: Full dark theme, auto-detect system preference, manual toggle
+      - Dark canvas: Canvas can have dark background independent of app theme
+      - High contrast mode: WCAG AA compliance, accessibility
+      - Responsive design: Mobile-first, works on phone, tablet, desktop
+      - Touch gestures: Pinch zoom, two-finger pan, long-press for context menu
+      - Mobile menu: Bottom navigation, swipe gestures
+      - Progressive Web App (PWA): Installable, works offline, push notifications
+      - Offline mode: Cache diagrams locally, sync when reconnected
+      - Performance: Initial load < 2s, time to interactive < 3s
+      - Code splitting: Route-based, lazy load components
+      - Image optimization: WebP format, lazy loading
+      - Virtual scrolling: Handle 10,000+ item lists
+      - 60 FPS: Canvas rendering smooth even with 1000+ elements
+      - No spinners: Optimistic UI, skeleton loaders instead
+      - No flickering: Smooth state transitions
+      - Loading states: Skeleton loaders, progress bars, smooth animations
+      - Error boundaries: Graceful error handling, recovery options
+      - Error messages: Helpful, actionable, include solutions
+      - Empty states: Illustrations, helpful text, call-to-action buttons
+      - Accessibility: WCAG 2.1 AA, keyboard navigation, screen reader support, ARIA labels
+      - Onboarding: Welcome tour, interactive tutorial, example diagrams
+      - Help system: In-app docs, video tutorials, contextual tooltips
+      - Notifications: In-app, email, push (PWA), preferences per type
+    </ux_and_performance>
+
+    <bayer_specific_features>
+      - Bayer MGA (myGenAssist): Primary AI provider, OpenAI-compatible format
+      - MGA endpoint: https://chat.int.bayer.com/api/v2
+      - MGA authentication: Bearer token from MGA_API_KEY
+      - MGA model: gpt-4.1 (default) or other Bayer-approved models
+      - MGA fallback chain: MGA → OpenAI → Anthropic (configurable)
+      - MGA cost tracking: Tokens and estimated cost per generation
+      - MGA usage analytics: Success rate, latency, quality metrics
+      - MGA compliance: All usage logged for Bayer audit requirements
+      - Azure DevOps integration: Connect to dev.azure.com/bayer
+      - Azure DevOps work items: Pull as diagram specs, generate diagrams from acceptance criteria
+      - Azure DevOps sync: Update work item status, add comments, link commits
+      - Azure DevOps authentication: Personal Access Token (PAT)
+      - Azure DevOps projects: PHCom and other Bayer projects
+      - Azure DevOps area paths: Filter by area (e.g., PHCom/IDP)
+      - Azure DevOps iterations: Link diagrams to sprints
+      - Bayer branding: Corporate logo, colors, custom domain
+      - Bayer compliance: Pre-approved templates, security patterns
+      - Bayer audit format: Logs formatted for Bayer compliance tools
+      - Bayer data retention: Configurable per Bayer policy
+      - Bayer network: VPN compatibility, proxy configuration
+      - On-premises: Air-gapped deployment option for sensitive data
+      - BYOC Bayer: Deploy in Bayer's AWS/Azure accounts
+      - Bayer SSO: Integration with Bayer's Microsoft Entra ID
+      - Bayer security: Meets all Bayer security requirements
+      - Bayer icon library: Pre-approved tech stack icons
+      - Multiple LLM providers: Easy switching between MGA, OpenAI, Anthropic, Gemini
+    </bayer_specific_features>
+  </core_features>
+
+  <quality_requirements>
+    <ai_generation_quality>
+      - Success rate: 90%+ users satisfied with first generation
+      - Layout quality: No overlapping nodes, professional spacing (min 50px)
+      - Icon accuracy: Correct AWS/Azure/GCP icons 95%+ of time
+      - Visual appearance: Indistinguishable from Eraser.io diagrams
+      - Generation speed: < 15 seconds average
+      - Refinement: Support 5+ iterative improvements per diagram
+    </ai_generation_quality>
+    
+    <canvas_performance>
+      - Frame rate: 60 FPS (even with 1000+ elements)
+      - Zoom: Smooth without lag
+      - Pan: Smooth panning
+      - Selection: Instant response (< 16ms)
+      - Drawing: No lag between tool use and visual update
+      - Memory: < 500MB for large diagrams
+    </canvas_performance>
+    
+    <export_quality>
+      - PNG: High resolution (2x, 4x retina), sharp text, transparent background working
+      - SVG: Clean code, optimized, editable in Illustrator/Figma
+      - PDF: Print-ready, embedded fonts, vector graphics where possible
+      - Consistency: Exports match canvas appearance 100%
+    </export_quality>
+    
+    <real_time_latency>
+      - Update latency: < 200ms for collaborators to see changes
+      - Cursor updates: < 100ms
+      - Comment posting: Appears instantly for all users
+      - Concurrent users: Support 20+ editing simultaneously
+      - Conflict resolution: No lost data, operational transform works
+    </real_time_latency>
+    
+    <api_performance>
+      - API response time: < 200ms p95
+      - Database queries: < 50ms p95
+      - Canvas operations: < 16ms (60 FPS)
+      - Search: < 500ms full-text search
+      - Uptime: 99.9% SLA (enterprise)
+    </api_performance>
+    
+    <code_quality>
+      - Test coverage: 80%+ (Playwright E2E + unit tests)
+      - TypeScript: Strict mode, no any types
+      - Python: Type hints everywhere, passes mypy
+      - Linting: Zero errors (ESLint, Ruff)
+      - Security: No vulnerabilities (Snyk, Trivy scans)
+      - Accessibility: WCAG 2.1 AA compliance
+    </code_quality>
+  </quality_requirements>
+
+  <testing_requirements>
+    <mandatory_testing>
+      Every feature MUST have:
+      - Playwright E2E test covering complete user flow
+      - Unit tests for business logic (80%+ coverage)
+      - Manual browser verification before marking "passes": true
+      - Screenshots for visual features
+      - Console error check (must be zero)
+      - Performance measurement
+      - Security validation
+      - Accessibility check
+      
+      If bugs found:
+      - Fix immediately before marking passing
+      - If found after marking passing: Change "passes" to false, fix, re-test
+      - Never skip testing to save time
+      - Zero console errors tolerated
+    </mandatory_testing>
+    
+    <test_categories>
+      - Smoke tests: Critical paths (login, create diagram, export)
+      - Regression tests: All features from previous versions
+      - Integration tests: Service-to-service communication
+      - Performance tests: Load testing, stress testing
+      - Security tests: Auth, permissions, SQL injection, XSS
+      - Accessibility tests: axe-core for WCAG compliance
+      - Visual regression: Percy or Chromatic for UI consistency
+      - Cross-browser: Chrome, Firefox, Safari
+      - Cross-platform: Mac, Windows, Linux
+      - Mobile: iOS Safari, Android Chrome
+    </test_categories>
+  </testing_requirements>
+
+  <implementation_priority>
+    <phase number="1">
+      <title>Foundation (Features 1-50)</title>
+      <tasks>
+        - Docker Compose with all 13 services
+        - Complete PostgreSQL schema (12 tables)
+        - Redis configuration
+        - MinIO buckets
+        - API Gateway routing
+        - Health checks for all services
+        - Logging and monitoring setup
+        - All backend service skeletons with health endpoints
+        - Frontend Next.js shell with routing
+        - Authentication flow (register, login, refresh, logout)
+      </tasks>
+    </phase>
+
+    <phase number="2">
+      <title>Core Canvas (Features 51-110)</title>
+      <tasks>
+        - TLDraw integration and customization
+        - All drawing tools (rectangle, circle, arrow, line, text, pen)
+        - Figures/frames system
+        - Selection and transformation
+        - Grouping and alignment
+        - Z-order management
+        - Styling system (colors, themes)
+        - Insert menu with icon search
+        - Icon library integration (3000+ icons)
+        - Properties panel
+        - Canvas controls (pan, zoom, grid, rulers)
+        - Keyboard shortcuts
+        - Undo/redo
+        - Copy/paste/duplicate
+      </tasks>
+    </phase>
+
+    <phase number="3">
+      <title>AI & Mermaid (Features 111-170)</title>
+      <tasks>
+        - Bayer MGA integration (PRIMARY)
+        - OpenAI, Anthropic, Gemini providers
+        - AI generation endpoint
+        - Prompt engineering system
+        - Layout algorithms (hierarchical, force-directed)
+        - Icon intelligence
+        - Quality validation
+        - Iterative refinement
+        - All 7 Mermaid diagram types (flowchart, sequence, ERD, class, state, gantt, git)
+        - Mermaid code editor with syntax highlighting
+        - Live code/visual sync
+        - AutoGraphBot codebase analysis
+      </tasks>
+    </phase>
+
+    <phase number="4">
+      <title>Collaboration & Note Editor (Features 171-240)</title>
+      <tasks>
+        - WebSocket real-time editing
+        - Cursor presence
+        - Selection presence
+        - Comments system with threads
+        - @mentions
+        - Markdown note editor
+        - Live diagram embeds in notes
+        - Wikilinks and backlinks
+        - Sharing and permissions
+      </tasks>
+    </phase>
+
+    <phase number="5">
+      <title>Git & Version History (Features 241-310)</title>
+      <tasks>
+        - GitHub/GitLab/Bitbucket connections
+        - Repository analysis (AutoGraphBot)
+        - Commit diagrams to repo
+        - Pull request integration
+        - CI/CD hooks
+        - Auto-versioning
+        - Version timeline UI
+        - Visual diff viewer
+      </tasks>
+    </phase>
+
+    <phase number="6">
+      <title>Export & Enterprise (Features 311-420)</title>
+      <tasks>
+        - High-quality PNG/SVG/PDF export
+        - SAML SSO (Entra, Okta, OneLogin)
+        - SCIM provisioning
+        - Audit logging
+        - Team management
+        - Usage analytics
+        - Compliance features
+      </tasks>
+    </phase>
+
+    <phase number="7">
+      <title>Integrations & Organization (Features 421-550)</title>
+      <tasks>
+        - VS Code extension
+        - Notion, Confluence, Slack, Jira integrations
+        - Azure DevOps work item integration (Bayer!)
+        - Diagramming API
+        - Folders and organization
+        - Full-text search
+        - Command palette
+        - Templates gallery
+      </tasks>
+    </phase>
+
+    <phase number="8">
+      <title>Polish & Optimization (Features 551-665)</title>
+      <tasks>
+        - Performance optimization
+        - Mobile responsiveness
+        - Accessibility (WCAG 2.1 AA)
+        - Onboarding flow
+        - Help system
+        - All remaining UX polish
+        - Bayer-specific features
+        - Multi-LLM provider switching
+      </tasks>
+    </phase>
+  </implementation_priority>
+
+  <success_criteria>
+    <eraser_io_parity>
+      - Feature parity: 100% of Eraser.io core features implemented
+      - Quality parity: User testing shows no preference between Eraser.io and AutoGraph
+      - Performance parity: Load times, generation speed match or exceed Eraser.io
+      - UX parity: Interface feels as polished and professional as Eraser.io
+    </eraser_io_parity>
+    
+    <bayer_requirements>
+      - Bayer MGA works as primary provider (all generations use MGA by default)
+      - Azure DevOps integration functional (work items, boards, repos)
+      - Compliance: Audit logs meet Bayer standards
+      - Security: Passes Bayer security review
+      - Deployment: Can deploy on-premises or in Bayer cloud
+      - SSO: Works with Bayer's Microsoft Entra ID
+    </bayer_requirements>
+    
+    <technical_excellence>
+      - All 665 features implemented and passing tests
+      - Zero critical bugs
+      - 80%+ test coverage
+      - Zero console errors in production
+      - API uptime 99.9%
+      - All services healthy and monitored
+    </technical_excellence>
+  </success_criteria>
+</project_specification>
+
+

@@ -1,0 +1,1 @@
+{{COPY_FILE:/Users/nirmalarya/Workspace/auto-harness/cursor-autonomous-coding/prompts/autograph_v3_comprehensive.txt}}
