@@ -22,6 +22,7 @@ from pathlib import Path
 
 from .cursor_agent_runner import run_autonomous_agent
 from .autonomous_backlog_runner import run_autonomous_backlog
+from .cursor_cli_client import check_cursor_prerequisites
 
 
 VERSION = "2.3.0-dev"
