@@ -12,6 +12,8 @@ from typing import Optional
 from cursor_client_streaming import CursorAgentClient
 from progress import count_features, print_progress_summary, print_session_header
 from security import SecurityValidator
+from multi_agent_mode import MultiAgentWorkflow
+from azure_devops_integration import AzureDevOpsIntegration
 
 
 # Configuration
