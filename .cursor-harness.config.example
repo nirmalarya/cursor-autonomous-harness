@@ -1,0 +1,17 @@
+# cursor-harness Configuration (Optional)
+# Copy to ~/.cursor-harness.config and customize
+
+[azure_devops]
+# Your Azure DevOps organization
+organization = Bayer-SMO-USRMT
+
+# Default project (optional)
+# project = togglr
+
+[defaults]
+# Default Cursor model
+# model = sonnet-4.5
+
+# Default max iterations
+# max_iterations = 200
+

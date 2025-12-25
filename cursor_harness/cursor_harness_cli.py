@@ -194,7 +194,7 @@ For more info: https://github.com/nirmalarya/cursor-autonomous-harness
     backlog_parser = subparsers.add_parser("backlog", help="Process Azure DevOps backlog")
     backlog_parser.add_argument("project_dir", type=str, help="Project directory")
     backlog_parser.add_argument("--project", dest="azure_devops_project", type=str, required=True, help="Azure DevOps project name")
-    backlog_parser.add_argument("--org", dest="azure_devops_org", type=str, default="Bayer-SMO-USRMT", help="Azure DevOps organization")
+    backlog_parser.add_argument("--org", dest="azure_devops_org", type=str, required=True, help="Azure DevOps organization (e.g., Bayer-SMO-USRMT, MyCompany)")
     backlog_parser.add_argument("--epic", type=str, help="Filter by epic (e.g., Epic-3)")
     backlog_parser.add_argument("--max-pbis", type=int, help="Max PBIs to process")
 
