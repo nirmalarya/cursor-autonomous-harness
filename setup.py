@@ -18,6 +18,14 @@ setup(
             "cursor-harness=cursor_harness.cursor_harness_cli:main",
         ],
     },
+    package_data={
+        "cursor_harness": [
+            "prompts/*.md",
+            "prompts/*.txt",
+            "prompts/multi-agent/*.md",
+            "specs/*.txt",
+        ],
+    },
     python_requires=">=3.10",
 )
 
