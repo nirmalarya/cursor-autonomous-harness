@@ -126,7 +126,7 @@ async def run_fetcher_session(
     Returns:
         Dict with pbi_id and spec_file path, or None if no PBIs
     """
-    from cursor_client_streaming import CursorAgentClient
+    from anthropic_client import AgentClient
     from security import SecurityValidator
     
     print("  Running Azure DevOps Fetcher Session...")
@@ -163,9 +163,10 @@ Get the first one and fetch its details with mcp_azure-devops_wit_get_work_item.
         fetcher_prompt = query_instruction + "\n" + fetcher_prompt
     
     # Create client
-    client = CursorAgentClient(
+    client = AgentClient(
         project_dir=project_dir,
         model=model,
+        max_tokens=8000,
         security_validator=SecurityValidator()
     )
     

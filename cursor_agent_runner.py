@@ -9,7 +9,7 @@ import asyncio
 from pathlib import Path
 from typing import Optional
 
-from cursor_client_streaming import CursorAgentClient
+from anthropic_client import AgentClient
 from progress import count_features, print_progress_summary, print_session_header
 from security import SecurityValidator
 from multi_agent_mode import MultiAgentWorkflow
@@ -133,9 +133,10 @@ async def run_autonomous_agent(
         print_session_header(iteration, is_first_run)
 
         # Create client (fresh context for each session)
-        client = CursorAgentClient(
+        client = AgentClient(
             project_dir=project_dir,
             model=model,
+            max_tokens=8000,
             security_validator=security_validator,
         )
 
