@@ -87,9 +87,8 @@ async def run_autonomous_backlog(
         success = await run_multi_agent_workflow_for_pbi(
             project_dir=project_dir,
             model=model,
-            pbi=pbi,
-            spec_file=spec_file,
-            ado=ado
+            pbi_id=fetcher_result['pbi_id'],
+            spec_file=fetcher_result['spec_file'],
         )
         
         if success:
@@ -354,7 +353,7 @@ async def run_multi_agent_workflow_for_pbi(
         workflow.mark_agent_complete(
             agent=agent,
             artifacts=[],  # Would get from agent output
-            commit_sha=get_latest_commit(),
+            commit_sha=get_latest_commit(project_dir),
             summary=f"{agent.title()} completed via autonomous harness"
         )
     
