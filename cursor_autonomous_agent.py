@@ -95,9 +95,9 @@ Authentication:
     parser.add_argument(
         "--mode",
         type=str,
-        choices=["greenfield", "enhancement", "bugfix"],
+        choices=["greenfield", "enhancement", "bugfix", "multi-agent", "autonomous-backlog"],
         default="greenfield",
-        help="Development mode: greenfield (new project), enhancement (add features), bugfix (fix issues)",
+        help="Development mode: greenfield (new project), enhancement (add features), bugfix (fix issues), multi-agent (run one PBI through workflow), autonomous-backlog (continuous backlog processing)",
     )
 
     parser.add_argument(
@@ -105,6 +105,42 @@ Authentication:
         type=str,
         default=None,
         help="Path to specification file (e.g., specs/autograph_puppeteer_migration.txt)",
+    )
+
+    # Azure DevOps integration
+    parser.add_argument(
+        "--azure-devops-org",
+        type=str,
+        default="Bayer-SMO-USRMT",
+        help="Azure DevOps organization",
+    )
+
+    parser.add_argument(
+        "--azure-devops-project",
+        type=str,
+        default=None,
+        help="Azure DevOps project name (e.g., togglr)",
+    )
+
+    parser.add_argument(
+        "--pbi-id",
+        type=str,
+        default=None,
+        help="Specific PBI ID to process (e.g., PBI-3.1.1 or BUG-16741)",
+    )
+
+    parser.add_argument(
+        "--epic",
+        type=str,
+        default=None,
+        help="Filter by epic (e.g., Epic-3)",
+    )
+
+    parser.add_argument(
+        "--max-pbis",
+        type=int,
+        default=None,
+        help="Maximum number of PBIs to process in autonomous-backlog mode",
     )
 
     return parser.parse_args()
