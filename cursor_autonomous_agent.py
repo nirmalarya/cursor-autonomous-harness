@@ -204,23 +204,46 @@ def main() -> None:
             else:
                 print("No MCP servers found in spec (will use Cursor defaults)\n")
 
-    # Validate spec file for enhancement/bugfix modes
+    # Validate required arguments
     if args.mode in ["enhancement", "bugfix"] and not args.spec:
         print(f"Error: --spec is required for {args.mode} mode")
         print(f"\nExample: --spec specs/sherpa_enhancement_spec.txt")
         return
+    
+    if args.mode in ["multi-agent", "autonomous-backlog"] and not args.azure_devops_project:
+        print(f"Error: --azure-devops-project is required for {args.mode} mode")
+        print(f"\nExample: --azure-devops-project togglr")
+        return
 
-    # Run the agent (prompts loaded inside runner based on mode)
+    # Route to appropriate mode
     try:
-        asyncio.run(
-            run_autonomous_agent(
-                project_dir=project_dir,
-                model=args.model,
-                max_iterations=args.max_iterations,
-                mode=args.mode,
-                spec_file=args.spec,
+        if args.mode == "autonomous-backlog":
+            # Continuous backlog processing
+            asyncio.run(
+                run_autonomous_backlog(
+                    project_dir=project_dir,
+                    model=args.model,
+                    azure_devops_org=args.azure_devops_org,
+                    azure_devops_project=args.azure_devops_project,
+                    epic=args.epic,
+                    max_pbis=args.max_pbis,
+                )
             )
-        )
+        elif args.mode == "multi-agent":
+            # Single PBI workflow
+            print("Multi-agent mode: Use autonomous-backlog with --max-pbis 1 for now")
+            return
+        else:
+            # Traditional modes
+            asyncio.run(
+                run_autonomous_agent(
+                    project_dir=project_dir,
+                    model=args.model,
+                    max_iterations=args.max_iterations,
+                    mode=args.mode,
+                    spec_file=args.spec,
+                )
+            )
     except KeyboardInterrupt:
         print("\n\n" + "="*70)
         print("  INTERRUPTED BY USER")
