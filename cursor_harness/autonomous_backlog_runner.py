@@ -127,7 +127,6 @@ async def run_fetcher_session(
         Dict with pbi_id and spec_file path, or None if no PBIs
     """
     from .cursor_cli_client import CursorCLIClient
-    from security import SecurityValidator
     
     print("  Running Azure DevOps Fetcher Session...")
     print("  (Agent will use MCP tools to fetch next PBI)\n")
