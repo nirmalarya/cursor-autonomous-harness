@@ -40,7 +40,7 @@ Repository = "https://github.com/nirmalarya/cursor-autonomous-harness"
 Issues = "https://github.com/nirmalarya/cursor-autonomous-harness/issues"
 
 [project.scripts]
-cursor-harness = "cursor_harness_cli:main"
+cursor-harness = "cursor_harness.cursor_harness_cli:main"
 
 [tool.setuptools]
 packages = ["cursor_harness"]
