@@ -46,6 +46,7 @@ class CursorCLIClient:
             "run",
             "--print",  # Print to console
             "--output-format", "text",
+            "--approve-mcps",  # Auto-approve MCP servers (no prompts!)
             prompt,
         ]
         
