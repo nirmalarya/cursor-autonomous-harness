@@ -84,6 +84,7 @@ class CursorMCPClient:
             # Parse and display streaming JSON events
             tool_count = 0
             accumulated_text = ""
+            last_text = ""  # Track to avoid duplicates
             
             for line in process.stdout:
                 try:
@@ -97,31 +98,44 @@ class CursorMCPClient:
                             for content_block in event['message']['content']:
                                 if 'text' in content_block:
                                     text = content_block['text']
-                                    accumulated_text += text
-                                    print(text, end='', flush=True)
+                                    # Avoid printing duplicates
+                                    if text != last_text:
+                                        accumulated_text += text
+                                        print(text, end='', flush=True)
+                                        last_text = text
                     
                     elif event_type == 'tool_call':
                         if subtype == 'started':
                             tool_count += 1
                             tool_call = event.get('tool_call', {})
                             
+                            # Compact tool output
                             if 'writeToolCall' in tool_call:
                                 path = tool_call['writeToolCall'].get('args', {}).get('path', 'unknown')
-                                print(f"\n🔧 Tool #{tool_count}: Creating {path}", flush=True)
+                                # Shorten path for readability
+                                if len(path) > 60:
+                                    path = "..." + path[-57:]
+                                print(f"\n✏️  #{tool_count}: Write {path}", flush=True)
                             elif 'readToolCall' in tool_call:
                                 path = tool_call['readToolCall'].get('args', {}).get('path', 'unknown')
-                                print(f"\n📖 Tool #{tool_count}: Reading {path}", flush=True)
+                                if len(path) > 60:
+                                    path = "..." + path[-57:]
+                                print(f"\n📖 #{tool_count}: Read {path}", flush=True)
                             elif 'bashToolCall' in tool_call:
                                 cmd_str = tool_call['bashToolCall'].get('args', {}).get('command', 'unknown')
-                                print(f"\n⚡ Tool #{tool_count}: Running: {cmd_str[:60]}", flush=True)
+                                if len(cmd_str) > 50:
+                                    cmd_str = cmd_str[:47] + "..."
+                                print(f"\n⚡ #{tool_count}: {cmd_str}", flush=True)
                         
                         elif subtype == 'completed':
-                            print("   ✅ Done", flush=True)
+                            # Don't print "Done" for every tool (too verbose)
+                            # Just show completion inline with next tool
+                            pass
                     
                     elif event_type == 'result':
                         duration = event.get('duration_ms', 0)
-                        print(f"\n\n🎯 Session completed in {duration}ms", flush=True)
-                        print(f"📊 Stats: {tool_count} tools, {len(accumulated_text)} chars generated\n", flush=True)
+                        duration_sec = duration / 1000
+                        print(f"\n\n✅ Completed in {duration_sec:.1f}s ({tool_count} tools)\n", flush=True)
                 
                 except json.JSONDecodeError:
                     # Non-JSON line (error messages, etc.)
