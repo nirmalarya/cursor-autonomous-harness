@@ -23,6 +23,7 @@ async def run_autonomous_backlog(
     azure_devops_project: str,
     epic: Optional[str] = None,
     max_pbis: Optional[int] = None,
+    resume: bool = True
 ):
     """
     Run autonomous backlog processing.
