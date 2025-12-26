@@ -38,7 +38,7 @@ async def run_autonomous_agent(
         mode: Development mode (greenfield, enhancement, bugfix)
         spec_file: Path to specification file (required for enhancement/bugfix)
     """
-    from prompts import get_initializer_prompt, get_coding_prompt, copy_spec_to_project
+    from .prompts import get_initializer_prompt, get_coding_prompt, copy_spec_to_project
     print("\n" + "=" * 70)
     print("  CURSOR AUTONOMOUS CODING AGENT")
     print("  (Using Cursor CLI)")
