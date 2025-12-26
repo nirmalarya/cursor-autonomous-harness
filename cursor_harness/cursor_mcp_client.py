@@ -9,6 +9,7 @@ Use ClaudeSDKClient instead (set ANTHROPIC_API_KEY).
 This file kept for reference/future Cursor CLI fixes.
 """
 
+import json
 import os
 import subprocess
 from pathlib import Path
