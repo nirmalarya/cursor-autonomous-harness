@@ -127,7 +127,8 @@ async def run_fetcher_session(
     Returns:
         Dict with pbi_id and spec_file path, or None if no PBIs
     """
-    from .cursor_cli_client import CursorCLIClient
+    from .cursor_mcp_client import CursorMCPClient
+    from .mcp_manager import create_mcp_manager_from_cursor_config
     
     print("  Running Azure DevOps Fetcher Session...")
     print("  (Agent will use MCP tools to fetch next PBI)\n")
@@ -181,10 +182,15 @@ Get its ID and fetch full details with mcp_azure-devops_wit_get_work_item.
     fetcher_prompt = fetcher_prompt.replace("{{WORK_ITEM_ID}}", "QUERY_RESULT")
     fetcher_prompt = query_instruction + "\n" + fetcher_prompt
     
-    # Create client
-    client = CursorCLIClient(
+    # Create MCP manager
+    mcp_manager = create_mcp_manager_from_cursor_config()
+    mcp_manager.start_all()
+    
+    # Create client with MCP support
+    client = CursorMCPClient(
         project_dir=project_dir,
-        model=model
+        model=model,
+        mcp_manager=mcp_manager
     )
     
     # Run fetcher session

@@ -9,7 +9,8 @@ import asyncio
 from pathlib import Path
 from typing import Optional
 
-from .cursor_cli_client import CursorCLIClient, check_cursor_prerequisites
+from .cursor_mcp_client import CursorMCPClient, check_cursor_prerequisites
+from .mcp_manager import create_mcp_manager_from_cursor_config
 from .progress import count_features, print_progress_summary, print_session_header
 from .security import SecurityValidator
 from .multi_agent_mode import MultiAgentWorkflow
@@ -132,10 +133,11 @@ async def run_autonomous_agent(
         # Print session header
         print_session_header(iteration, is_first_run)
 
-        # Create client (fresh context for each session)
-        client = CursorCLIClient(
+        # Create client (fresh context for each session, but shares MCP manager)
+        client = CursorMCPClient(
             project_dir=project_dir,
             model=model,
+            mcp_manager=mcp_manager
         )
 
         # Choose prompt based on session type and mode
