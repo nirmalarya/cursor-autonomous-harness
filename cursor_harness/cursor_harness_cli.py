@@ -92,6 +92,7 @@ def cmd_backlog(args):
             azure_devops_project=args.azure_devops_project,
             epic=args.epic,
             max_pbis=args.max_pbis,
+            resume=True  # Always enable resume capability
         )
     )
 
