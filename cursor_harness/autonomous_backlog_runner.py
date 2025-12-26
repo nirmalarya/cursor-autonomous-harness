@@ -338,6 +338,9 @@ async def run_multi_agent_workflow_for_pbi(
         "acceptance_criteria": pbi['fields'].get('Microsoft.VSTS.Common.AcceptanceCriteria', '')
     }
     
+    # Initialize workflow manager
+    workflow = MultiAgentWorkflow(project_dir, pbi_id)
+    
     # Check if workflow already started (resume capability)
     current_state = workflow.get_workflow_state()
     completed_agents = current_state.get('completedAgents', [])
