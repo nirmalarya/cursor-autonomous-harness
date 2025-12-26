@@ -47,7 +47,24 @@ async def run_autonomous_backlog(
     # Initialize integrations
     ado = AzureDevOpsIntegration(azure_devops_org, azure_devops_project)
     
+    # Check for existing workflow state (resume capability)
+    workflow_state_file = project_dir / ".cursor" / "backlog-state.json"
     pbis_completed = 0
+    
+    if resume and workflow_state_file.exists():
+        import json
+        try:
+            with open(workflow_state_file) as f:
+                resume_state = json.load(f)
+            pbis_completed = resume_state.get('pbis_completed', 0)
+            last_pbi = resume_state.get('last_pbi_id', None)
+            print(f"\n🔄 Resuming from previous session")
+            print(f"   Completed: {pbis_completed} PBIs")
+            if last_pbi:
+                print(f"   Last PBI: {last_pbi}")
+            print()
+        except:
+            pass
     
     while True:
         # 1. FETCH SESSION: Query Azure DevOps and create spec
@@ -93,16 +110,37 @@ async def run_autonomous_backlog(
         )
         
         if success:
-            # 5. Mark as Done
-            ado.mark_done(pbi['id'])
+            # 5. Mark as Done in Azure DevOps
+            ado.mark_done(int(pbi_id))
+            
+            # 6. Add final comment
+            ado.add_comment(
+                int(pbi_id),
+                f"✅ PBI-{pbi_id} COMPLETE!\n\nAll 6 agents passed. Ready for deployment.\n\nSee PBI-{pbi_id}-COMPLETE.md for details."
+            )
             
             pbis_completed += 1
-            print(f"\n🎉 {pbi['id']} COMPLETE!")
+            print(f"\n🎉 PBI-{pbi_id} COMPLETE!")
             print(f"   Total: {pbis_completed}/{max_pbis or '∞'}\n")
+            
+            # Save progress state (resume capability)
+            import json
+            workflow_state_file.parent.mkdir(parents=True, exist_ok=True)
+            with open(workflow_state_file, 'w') as f:
+                json.dump({
+                    'pbis_completed': pbis_completed,
+                    'last_pbi_id': pbi_id,
+                    'timestamp': datetime.now().isoformat()
+                }, f, indent=2)
             
             # Check limit
             if max_pbis and pbis_completed >= max_pbis:
-                print(f"✅ Reached limit ({max_pbis} PBIs)")
+                print(f"\n{'═'*70}")
+                print(f"  ✅ BACKLOG PROCESSING COMPLETE")
+                print(f"{'═'*70}")
+                print(f"\n  Completed: {pbis_completed} PBIs")
+                print(f"  All PBIs marked as Done in Azure DevOps")
+                print(f"\n{'═'*70}\n")
                 return
             
             # Continue to next
@@ -431,19 +469,21 @@ async def run_multi_agent_workflow_for_pbi(
         print(f"  Session 2+: Coder (implement tasks)")
         print(f"  Stops automatically when agent tasks complete\n")
         
-        # Run FULL autonomous harness for this agent!
-        # This respects the Anthropic pattern (initializer + coders)
-        from .cursor_agent_runner import run_autonomous_agent
+        # Run single agent until its tasks complete
+        from .single_agent_runner import run_single_agent
         
-        await run_autonomous_agent(
+        agent_success = await run_single_agent(
             project_dir=project_dir,
+            agent_name=agent,
+            spec_file=agent_spec_file,
             model=model,
-            max_iterations=50,  # Allow multiple sessions per agent
-            mode="enhancement",  # Agent enhances existing project
-            spec_file=str(agent_spec_file),
+            max_sessions=20  # Max 20 sessions per agent
         )
         
-        # Agent completed (stopped at 100% automatically)
+        if not agent_success:
+            print(f"\n❌ {agent.upper()} agent failed!\n")
+            return False
+        
         print(f"\n✅ {agent.upper()} agent complete!\n")
         
         # TODO: Update Azure DevOps via MCP
