@@ -50,23 +50,20 @@ class CursorCLIClient:
         ]
         
         try:
-            # Run cursor agent
+            # Run cursor agent (streaming output to console)
             result = subprocess.run(
                 cmd,
                 cwd=self.project_dir,
-                capture_output=True,
-                text=True,
+                # Don't capture - let output stream to terminal in real-time!
                 timeout=3600,  # 1 hour timeout per session
             )
             
             if result.returncode == 0:
-                print("✅ Session complete")
-                return "continue", result.stdout
+                print("\n✅ Session complete")
+                return "continue", ""
             else:
-                print(f"❌ Session failed (exit code: {result.returncode})")
-                if result.stderr:
-                    print(f"Error: {result.stderr[:500]}")
-                return "error", result.stderr
+                print(f"\n❌ Session failed (exit code: {result.returncode})")
+                return "error", ""
         
         except subprocess.TimeoutExpired:
             print("❌ Session timed out (1 hour limit)")
