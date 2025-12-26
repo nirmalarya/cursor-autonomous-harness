@@ -81,7 +81,8 @@ class MultiAgentWorkflow:
             "currentAgent": "Architect",
             "completedAgents": [],  # Empty for new PBI!
             "checkpoints": [],
-            "lastUpdated": datetime.now().isoformat()
+            "pendingADOUpdates": [],
+            "lastUpdated": datetime.now().isoformat()  # Only ONE lastUpdated!
         }
         
         self.save_workflow_state(initial_state)
@@ -105,13 +106,28 @@ class MultiAgentWorkflow:
         }
     
     def save_workflow_state(self, state: Dict):
-        """Save workflow state."""
+        """Save workflow state with validation to prevent corruption."""
         
         state_dir = self.project_dir / ".cursor"
         state_dir.mkdir(parents=True, exist_ok=True)
         
         state_file = state_dir / "workflow-state.json"
-        state_file.write_text(json.dumps(state, indent=2))
+        
+        # Validate JSON before saving (prevent corruption!)
+        try:
+            json_str = json.dumps(state, indent=2)
+            # Verify it's valid by parsing it back
+            json.loads(json_str)
+            
+            # Atomic write: write to temp file first, then rename
+            temp_file = state_file.with_suffix('.json.tmp')
+            temp_file.write_text(json_str)
+            temp_file.replace(state_file)  # Atomic on POSIX systems
+            
+        except (json.JSONDecodeError, ValueError) as e:
+            print(f"⚠️  Failed to save workflow state: Invalid JSON - {e}")
+            print(f"   State not saved to prevent corruption!")
+            # Don't save corrupted data!
     
     def get_next_agent(self) -> Optional[str]:
         """Get next agent to run based on workflow state."""
@@ -130,7 +146,10 @@ class MultiAgentWorkflow:
         
         state = self.get_workflow_state()
         
-        state['completedAgents'].append(agent)
+        # Prevent duplicate agents
+        if agent not in state.get('completedAgents', []):
+            state['completedAgents'].append(agent)
+        
         state['checkpoints'].append({
             "agent": agent,
             "completedAt": datetime.now().isoformat(),
@@ -138,6 +157,9 @@ class MultiAgentWorkflow:
             "commit": commit_sha,
             "summary": summary
         })
+        
+        # Update lastUpdated (replace, don't append!)
+        state['lastUpdated'] = datetime.now().isoformat()
         
         self.save_workflow_state(state)
     
