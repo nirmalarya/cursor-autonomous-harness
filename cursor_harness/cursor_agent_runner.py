@@ -106,13 +106,13 @@ async def run_autonomous_agent(
     
     try:
         while True:
-        iteration += 1
+            iteration += 1
 
-        # Check max iterations
-        if max_iterations and iteration > max_iterations:
-            print(f"\nReached max iterations ({max_iterations})")
-            print("To continue, run the script again without --max-iterations")
-            break
+            # Check max iterations
+            if max_iterations and iteration > max_iterations:
+                print(f"\nReached max iterations ({max_iterations})")
+                print("To continue, run the script again without --max-iterations")
+                break
         
         # Check if project is 100% complete (CRITICAL!)
         # Skip on iteration 1 for enhancement/bugfix (let initializer add features first!)
