@@ -57,19 +57,20 @@ class CursorMCPClient:
         # cursor-agent auto-discovers MCPs, no need to augment prompt
         augmented_prompt = prompt
         
-        # Use cursor-agent (standalone command, not subcommand!)
-        # Per official docs: https://cursor.com/docs/cli/mcp
+        # Use cursor-agent with streaming for real-time progress
+        # Per official docs: https://cursor.com/docs/cli/headless
         cmd = [
             "cursor-agent",
             "-p",  # Print mode
             "--force",  # Allow file modifications
             "--approve-mcps",  # Auto-approve MCP servers
-            "--output-format", "text",  # Text output (cleaner than stream-json)
+            "--output-format", "stream-json",  # Stream events in real-time
+            "--stream-partial-output",  # Stream partial text deltas
             augmented_prompt,
         ]
         
         try:
-            # Run cursor agent with real-time output streaming
+            # Run cursor agent with real-time streaming
             process = subprocess.Popen(
                 cmd,
                 cwd=self.project_dir,
@@ -79,9 +80,51 @@ class CursorMCPClient:
                 bufsize=1,  # Line buffered
             )
             
-            # Stream output in real-time
+            # Parse and display streaming JSON events
+            tool_count = 0
+            accumulated_text = ""
+            
             for line in process.stdout:
-                print(line, end='', flush=True)
+                try:
+                    event = json.loads(line.strip())
+                    event_type = event.get('type', '')
+                    subtype = event.get('subtype', '')
+                    
+                    if event_type == 'assistant':
+                        # Accumulate text deltas
+                        if 'message' in event and 'content' in event['message']:
+                            for content_block in event['message']['content']:
+                                if 'text' in content_block:
+                                    text = content_block['text']
+                                    accumulated_text += text
+                                    print(text, end='', flush=True)
+                    
+                    elif event_type == 'tool_call':
+                        if subtype == 'started':
+                            tool_count += 1
+                            tool_call = event.get('tool_call', {})
+                            
+                            if 'writeToolCall' in tool_call:
+                                path = tool_call['writeToolCall'].get('args', {}).get('path', 'unknown')
+                                print(f"\n🔧 Tool #{tool_count}: Creating {path}", flush=True)
+                            elif 'readToolCall' in tool_call:
+                                path = tool_call['readToolCall'].get('args', {}).get('path', 'unknown')
+                                print(f"\n📖 Tool #{tool_count}: Reading {path}", flush=True)
+                            elif 'bashToolCall' in tool_call:
+                                cmd_str = tool_call['bashToolCall'].get('args', {}).get('command', 'unknown')
+                                print(f"\n⚡ Tool #{tool_count}: Running: {cmd_str[:60]}", flush=True)
+                        
+                        elif subtype == 'completed':
+                            print("   ✅ Done", flush=True)
+                    
+                    elif event_type == 'result':
+                        duration = event.get('duration_ms', 0)
+                        print(f"\n\n🎯 Session completed in {duration}ms", flush=True)
+                        print(f"📊 Stats: {tool_count} tools, {len(accumulated_text)} chars generated\n", flush=True)
+                
+                except json.JSONDecodeError:
+                    # Non-JSON line (error messages, etc.)
+                    print(line, end='', flush=True)
             
             # Wait for completion
             returncode = process.wait(timeout=3600)
