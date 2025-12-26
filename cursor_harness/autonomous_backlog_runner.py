@@ -89,6 +89,7 @@ async def run_autonomous_backlog(
             model=model,
             pbi_id=fetcher_result['pbi_id'],
             spec_file=fetcher_result['spec_file'],
+            ado=ado
         )
         
         if success:
@@ -300,6 +301,7 @@ async def run_multi_agent_workflow_for_pbi(
     model: str,
     pbi_id: str,
     spec_file: Path,
+    ado: 'AzureDevOpsIntegration'
 ) -> bool:
     """
     Run complete multi-agent workflow for one PBI.
