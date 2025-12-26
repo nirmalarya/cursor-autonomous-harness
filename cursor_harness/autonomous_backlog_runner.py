@@ -313,6 +313,10 @@ async def run_multi_agent_workflow_for_pbi(
     
     agents = ["architect", "engineer", "tester", "code_review", "security", "devops"]
     
+    # Fetch PBI from Azure DevOps to get full details
+    print(f"📋 Fetching PBI details from Azure DevOps: {pbi_id}...")
+    pbi = ado.fetch_pbi(pbi_id)
+    
     # Create PBI context
     pbi_context = {
         "project_name": ado.project,
