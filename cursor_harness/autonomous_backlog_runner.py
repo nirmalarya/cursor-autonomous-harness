@@ -16,6 +16,7 @@ from typing import Dict, List, Optional
 from .azure_devops_integration import AzureDevOpsIntegration
 from .multi_agent_mode import MultiAgentWorkflow
 from .cursor_agent_runner import run_autonomous_agent
+from .agent_reviewer import AgentReviewer, should_review_agent
 import subprocess
 
 
@@ -477,6 +478,12 @@ async def run_multi_agent_workflow_for_pbi(
     # CRITICAL: Each PBI must have its own workflow state!
     workflow = MultiAgentWorkflow(project_dir, f"PBI-{pbi_id}")
     
+    # Initialize reviewer
+    reviewer = AgentReviewer(project_dir)
+    
+    # Get baseline commit (before starting work)
+    baseline_commit = get_latest_commit(project_dir)
+    
     # Check if workflow already started (resume capability)
     current_state = workflow.get_workflow_state()
     completed_agents = current_state.get('completedAgents', [])
@@ -520,6 +527,12 @@ async def run_multi_agent_workflow_for_pbi(
             return False
         
         print(f"\n✅ {agent.upper()} agent complete!\n")
+        
+        # Review agent's changes (if critical agent)
+        if should_review_agent(agent):
+            reviewer.review_after_agent(agent, baseline_commit)
+            # Update baseline for next agent
+            baseline_commit = get_latest_commit(project_dir)
         
         # TODO: Update Azure DevOps via MCP
         # Would use mcp_azure-devops_wit_add_work_item_comment
