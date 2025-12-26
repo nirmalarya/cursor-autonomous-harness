@@ -376,7 +376,7 @@ async def run_multi_agent_workflow_for_pbi(
         
         # Run FULL autonomous harness for this agent!
         # This respects the Anthropic pattern (initializer + coders)
-        from cursor_agent_runner import run_autonomous_agent
+        from .cursor_agent_runner import run_autonomous_agent
         
         await run_autonomous_agent(
             project_dir=project_dir,
